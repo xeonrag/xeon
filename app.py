@@ -20,6 +20,10 @@ HEADERS = {
     "cookie": "uid=0e0726d51b8420f1; _ga=GA1.1.879823300.1758550145; ..."
 }
 
+@app.route("/")
+def index():
+    return "Instagram Reel Downloader API is running."
+
 @app.route("/api/downloader/insta", methods=["GET"])
 def insta_downloader():
     reel_url = request.args.get("url")
