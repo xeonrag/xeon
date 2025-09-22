@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
 import requests
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 API_URL = "https://sssinstagram.com/api/convert"
 
 HEADERS = {
-    "accept": "application/json, text/plain, /",
+    "accept": "application/json, text/plain, */*",
     "accept-language": "en-US,en;q=0.9",
     "content-type": "application/json",
     "priority": "u=1, i",
@@ -16,7 +16,7 @@ HEADERS = {
     "sec-fetch-dest": "empty",
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-origin",
-    # ⚠ cookie will expire; replace with fresh one if it stops working
+    # ⚠ Cookie may expire, replace if request fails
     "cookie": "uid=0e0726d51b8420f1; _ga=GA1.1.879823300.1758550145; ..."
 }
 
@@ -36,14 +36,14 @@ def insta_downloader():
 
     try:
         resp = requests.post(API_URL, headers=HEADERS, json=payload)
+        resp.raise_for_status()  # Raises error if status != 200
         data = resp.json()
 
-        # Extract clean values
         result = {
             "author": data.get("meta", {}).get("username"),
             "title": data.get("meta", {}).get("title"),
             "thumbnail": data.get("thumb"),
-            "video": data.get("url", [{}])[0].get("url")
+            "video": (data.get("url") or [{}])[0].get("url")
         }
 
         return jsonify(result), 200
@@ -51,5 +51,5 @@ def insta_downloader():
         return jsonify({"error": str(e)}), 500
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     app.run(debug=True)
