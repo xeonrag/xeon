@@ -1,59 +1,58 @@
 from flask import Flask, request, jsonify
 import requests
+import time
 
 app = Flask(__name__)
 
-API_URL = "https://sssinstagram.com/api/convert"
-
-HEADERS = {
-    "accept": "application/json, text/plain, */*",
-    "accept-language": "en-US,en;q=0.9",
-    "content-type": "application/json",
-    "priority": "u=1, i",
-    "sec-ch-ua": '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    # ⚠ Cookie may expire, replace if request fails
-    "cookie": "uid=0e0726d51b8420f1; _ga=GA1.1.879823300.1758550145; ..."
-}
-
-@app.route("/")
-def index():
-    return "Instagram Reel Downloader API is running."
-
-@app.route("/api/downloader/insta", methods=["GET"])
-def insta_downloader():
-    reel_url = request.args.get("url")
-    if not reel_url:
-        return jsonify({"error": "Missing url parameter"}), 400
-
-    payload = {
-        "url": reel_url,
-        "ts": 1758550887025,
-        "_ts": 1758529858437,
-        "_tsc": 0,
-        "_s": "b9c03d2f4cc78f71135790dff0d9f614030cebc60f404392580bb459ca312d61"
-    }
-
+@app.route("/sre", methods=["GET"])
+def sre_api():
     try:
-        resp = requests.post(API_URL, headers=HEADERS, json=payload)
-        resp.raise_for_status()  # Raises error if status != 200
-        data = resp.json()
+        # Get Instagram URL from query params
+        keyword = request.args.get("url")
+        if not keyword:
+            return jsonify({"error": "Missing 'url' parameter"}), 400
 
-        result = {
-            "author": data.get("meta", {}).get("username"),
-            "title": data.get("meta", {}).get("title"),
-            "thumbnail": data.get("thumb"),
-            "video": (data.get("url") or [{}])[0].get("url")
+        url = "https://lgs.pubpowerplatform.io/sre"
+
+        headers = {
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "content-type": "text/plain;charset=UTF-8",
+            "priority": "u=1, i",
+            "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "Referer": "https://toolzu.com/"
         }
 
-        return jsonify(result), 200
+        # Construct body dynamically
+        payload = {
+            "level": "client_logs",
+            "message": "js_user_searchs",
+            "keyword": keyword,
+            "domain": "toolzu.com",
+            "device": "pc",
+            "operating_system": "Windows",
+            "domainId": 12531,
+            "pageUrl": "https://toolzu.com/downloader/instagram/video/",
+            "jsVer": "1.0.6",
+            "cacheTime": int(time.time()),  # current timestamp
+            "userAgent": request.headers.get("User-Agent", "Flask-API")
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+
+        return jsonify({
+            "status": response.status_code,
+            "response": response.json() if "application/json" in response.headers.get("content-type", "") else response.text
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
